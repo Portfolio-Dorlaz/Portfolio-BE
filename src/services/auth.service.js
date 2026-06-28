@@ -4,7 +4,7 @@ import { signAccessToken } from "../utils/jwt.js";
 
 export const registerService = async ({ fullName, email, password }) => {
   if (!fullName || !email || !password) {
-    throw new Error("Thiếu thông tin đăng ký");
+    throw new Error("Missing information register!");
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -12,7 +12,7 @@ export const registerService = async ({ fullName, email, password }) => {
   });
 
   if (existingUser) {
-    throw new Error("Email đã tồn tại");
+    throw new Error("The email already exists.");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -22,6 +22,7 @@ export const registerService = async ({ fullName, email, password }) => {
       fullName,
       email,
       passwordHash,
+      role: "USER",
     },
   });
 
@@ -40,7 +41,7 @@ export const registerService = async ({ fullName, email, password }) => {
 
 export const loginService = async ({ email, password }) => {
   if (!email || !password) {
-    throw new Error("Thiếu email hoặc mật khẩu");
+    throw new Error("Missing email or password");
   }
 
   const user = await prisma.user.findUnique({
@@ -48,13 +49,13 @@ export const loginService = async ({ email, password }) => {
   });
 
   if (!user) {
-    throw new Error("Email hoặc mật khẩu không đúng");
+    throw new Error("Email or password incorrect!");
   }
 
   const isMatch = await bcrypt.compare(password, user.passwordHash);
 
   if (!isMatch) {
-    throw new Error("Email hoặc mật khẩu không đúng");
+    throw new Error("Email or password incorrect!");
   }
 
   const accessToken = signAccessToken(user);
@@ -83,7 +84,7 @@ export const getMeService = async (userId) => {
   });
 
   if (!user) {
-    throw new Error("Không tìm thấy user");
+    throw new Error("User not found");
   }
 
   return user;
