@@ -1,6 +1,17 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma.js";
-import { signAccessToken } from "../utils/jwt.js";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt.js";
+
+const mapUserResponse = (user) => ({
+  id: user.id,
+  fullName: user.fullName,
+  email: user.email,
+  role: user.role,
+});
 
 export const registerService = async ({ fullName, email, password }) => {
   if (!fullName || !email || !password) {
@@ -27,15 +38,12 @@ export const registerService = async ({ fullName, email, password }) => {
   });
 
   const accessToken = signAccessToken(user);
+  const refreshToken = signRefreshToken(user);
 
   return {
-    user: {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-    },
+    user: mapUserResponse(user),
     accessToken,
+    refreshToken,
   };
 };
 
@@ -59,15 +67,35 @@ export const loginService = async ({ email, password }) => {
   }
 
   const accessToken = signAccessToken(user);
+  const refreshToken = signRefreshToken(user);
 
   return {
-    user: {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-    },
+    user: mapUserResponse(user),
     accessToken,
+    refreshToken,
+  };
+};
+
+export const refreshTokenService = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new Error("Refresh token is required");
+  }
+
+  const decoded = verifyRefreshToken(refreshToken);
+
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.userId },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const accessToken = signAccessToken(user);
+
+  return {
+    accessToken,
+    user: mapUserResponse(user),
   };
 };
 

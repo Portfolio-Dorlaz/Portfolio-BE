@@ -1,7 +1,7 @@
 import { prisma } from "../config/prisma.js";
 
-export const createPostService = async (userId, body) => {
-  const { title, slug, excerpt, content, thumbnailUrl, status } = body;
+export const createPostService = async (userId, body, file) => {
+  const { title, slug, excerpt, content, status } = body;
 
   if (!title || !slug || !content) {
     throw new Error("Thiếu title, slug hoặc content");
@@ -15,15 +15,17 @@ export const createPostService = async (userId, body) => {
     throw new Error("Slug đã tồn tại");
   }
 
+  const thumbnailUrl = file ? `/uploads/${file.filename}` : null;
+
   const post = await prisma.post.create({
     data: {
       title,
       slug,
       excerpt,
       content,
-      thumbnailUrl,
       status: status || "draft",
       publishedAt: status === "published" ? new Date() : null,
+      thumbnailUrl,
       authorId: userId,
     },
     include: {
@@ -32,7 +34,6 @@ export const createPostService = async (userId, body) => {
           id: true,
           fullName: true,
           email: true,
-          role: true,
         },
       },
     },
@@ -109,7 +110,7 @@ export const updatePostService = async (postId, user, body) => {
     throw new Error("Bài viết không tồn tại");
   }
 
-  if (user.role !== "ADMIN" && existingPost.authorId !== user.userId) {
+  if (user.role !== "admin" && existingPost.authorId !== user.userId) {
     throw new Error("Bạn không có quyền sửa bài này");
   }
 

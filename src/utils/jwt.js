@@ -1,4 +1,15 @@
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
+
+const accessSecret = process.env.JWT_ACCESS_SECRET;
+const refreshSecret = process.env.JWT_REFRESH_SECRET;
+
+if (!accessSecret) {
+  throw new Error('Missing JWT_ACCESS_SECRET');
+}
+
+if (!refreshSecret) {
+  throw new Error('Missing JWT_REFRESH_SECRET');
+}
 
 export const signAccessToken = (user) => {
   return jwt.sign(
@@ -7,11 +18,25 @@ export const signAccessToken = (user) => {
       email: user.email,
       role: user.role,
     },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
+    accessSecret,
+    { expiresIn: '15m' }
+  );
+};
+
+export const signRefreshToken = (user) => {
+  return jwt.sign(
+    {
+      userId: user.id,
+    },
+    refreshSecret,
+    { expiresIn: '7d' }
   );
 };
 
 export const verifyAccessToken = (token) => {
-  return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, accessSecret);
+};
+
+export const verifyRefreshToken = (token) => {
+  return jwt.verify(token, refreshSecret);
 };

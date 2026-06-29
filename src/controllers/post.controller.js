@@ -8,8 +8,9 @@ import {
 } from "../services/post.service.js";
 
 export const createPostController = async (req, res) => {
-  try {
-    const post = await createPostService(req.user.userId, req.body);
+    try {
+        console.log(req.body);
+    const post = await createPostService(req.user.userId, req.body, req.file);
     return res.status(201).json(post);
   } catch (error) {
     return res.status(400).json({ message: error.message });
