@@ -1,7 +1,7 @@
 import { prisma } from "../config/prisma.js";
 
 export const createPostService = async (userId, body, file) => {
-  const { title, slug, excerpt, content, status } = body;
+  const { title, slug, excerpt, content, status, category } = body;
 
   if (!title || !slug || !content) {
     throw new Error("Thiếu title, slug hoặc content");
@@ -21,6 +21,7 @@ export const createPostService = async (userId, body, file) => {
     data: {
       title,
       slug,
+      category,
       excerpt,
       content,
       status: status || "draft",
