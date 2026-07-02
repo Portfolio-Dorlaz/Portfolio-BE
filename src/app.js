@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from "cors";
 import authRoutes from "./routes/auth.route.js";
 import postRoutes from "./routes/post.route.js";
+import commentRoutes from "./routes/comment.route.js";
 // import projectRoutes from "./routes/project.route.js";
 // import contactRoutes from "./routes/contact.route.js";
 
@@ -23,6 +24,7 @@ app.use(cookieParser());
 // router
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/comments", commentRoutes);
 // app.use("/api/projects", projectRoutes);
 // app.use("/api/contact", contactRoutes);
 
