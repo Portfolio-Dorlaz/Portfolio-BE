@@ -10,12 +10,35 @@ import commentRoutes from "./routes/comment.route.js";
 const app = express();
 
 // middleware
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL_DEPLOY,
+].filter(Boolean).map((origin) => origin.trim());
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL_DEPLOY,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.options("*", cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
+
 app.use(express.json());
 app.use(express.static("public"));
 app.use(cookieParser());
