@@ -12,7 +12,7 @@ const app = express();
 // middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL_DEPLOY,
     credentials: true,
   })
 );
