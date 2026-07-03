@@ -47,6 +47,40 @@ export const registerService = async ({ fullName, email, password }) => {
   };
 };
 
+export const registerAdminService = async ({ fullName, email, password }) => {
+  if (!fullName || !email || !password) {
+    throw new Error("Missing information register!");
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (existingUser) {
+    throw new Error("The email already exists.");
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  const user = await prisma.user.create({
+    data: {
+      fullName,
+      email,
+      passwordHash,
+      role: "admin",
+    },
+  });
+
+  const accessToken = signAccessToken(user);
+  const refreshToken = signRefreshToken(user);
+
+  return {
+    user: mapUserResponse(user),
+    accessToken,
+    refreshToken,
+  };
+};
+
 export const loginService = async ({ email, password }) => {
   if (!email || !password) {
     throw new Error("Missing email or password");

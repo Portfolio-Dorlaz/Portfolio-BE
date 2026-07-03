@@ -21,6 +21,21 @@ export const registerController = async (req, res) => {
   }
 };
 
+export const registerAdminControllers = async (req, res) => {
+  try {
+    const data = await registerAdminService(req.body);
+
+    res.cookie("refreshToken", data.refreshToken, refreshCookieOptions);
+
+    return res.status(201).json({
+      user: data.user,
+      accessToken: data.accessToken,
+    });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
 export const loginController = async (req, res) => {
   try {
     const data = await loginService(req.body);
