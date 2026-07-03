@@ -3,6 +3,7 @@ import {
   loginService,
   getMeService,
   refreshTokenService,
+  registerAdminService,
 } from "../services/auth.service.js";
 import { refreshCookieOptions } from "../utils/cookie.js";
 
