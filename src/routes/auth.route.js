@@ -16,6 +16,6 @@ router.post("/register/admin", registerAdminControllers);
 router.post("/login", loginController);
 router.post("/refresh", refreshController);
 router.post("/logout", logoutController);
-router.get("/", authMiddleware, meController);
+router.get("/me", authMiddleware, meController);
 
 export default router;
