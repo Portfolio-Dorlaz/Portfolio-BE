@@ -54,11 +54,15 @@ export const loginController = async (req, res) => {
 
 export const refreshController = async (req, res) => {
   try {
+    console.log("cookies:", req.cookies);
     const refreshToken = req.cookies.refreshToken;
-    const data = await refreshTokenService(refreshToken);
+    console.log("refreshToken exists:", !!refreshToken);
 
+    const data = await refreshTokenService(refreshToken);
     return res.status(200).json(data);
   } catch (error) {
+    console.log("refresh error name:", error.name);
+    console.log("refresh error message:", error.message);
     return res.status(401).json({ message: error.message });
   }
 };
