@@ -1,7 +1,24 @@
 import { prisma } from "../config/prisma.js";
 
+const normalizeRole = (role) => String(role || "").toLowerCase();
+
+const normalizeStatus = (body) => {
+  if (body.status === "published" || body.status === "draft") {
+    return body.status;
+  }
+
+  if (typeof body.isPublished !== "undefined") {
+    return body.isPublished === true || body.isPublished === "true"
+      ? "published"
+      : "draft";
+  }
+
+  return "draft";
+};
+
 export const createPostService = async (userId, body, file) => {
-  const { title, slug, excerpt, content, status, category } = body;
+  const { title, slug, excerpt, content, category } = body;
+  const status = normalizeStatus(body);
 
   if (!title || !slug || !content) {
     throw new Error("Thiếu title, slug hoặc content");
@@ -21,10 +38,10 @@ export const createPostService = async (userId, body, file) => {
     data: {
       title,
       slug,
-      category,
-      excerpt,
+      excerpt: excerpt || null,
       content,
-      status: status || "draft",
+      category: category || null,
+      status,
       publishedAt: status === "published" ? new Date() : null,
       thumbnailUrl,
       authorId: userId,
@@ -102,7 +119,7 @@ export const getAllPostsAdminService = async () => {
   });
 };
 
-export const updatePostService = async (postId, user, body) => {
+export const updatePostService = async (postId, user, body, file) => {
   const existingPost = await prisma.post.findUnique({
     where: { id: postId },
   });
@@ -111,20 +128,41 @@ export const updatePostService = async (postId, user, body) => {
     throw new Error("Bài viết không tồn tại");
   }
 
-  if (user.role !== "admin" && existingPost.authorId !== user.userId) {
+  if (
+    normalizeRole(user.role) !== "admin" &&
+    existingPost.authorId !== user.userId
+  ) {
     throw new Error("Bạn không có quyền sửa bài này");
   }
 
-  const nextStatus = body.status ?? existingPost.status;
+  if (body.slug && body.slug !== existingPost.slug) {
+    const duplicatedSlug = await prisma.post.findUnique({
+      where: { slug: body.slug },
+    });
+
+    if (duplicatedSlug) {
+      throw new Error("Slug đã tồn tại");
+    }
+  }
+
+  const nextStatus =
+    typeof body.status !== "undefined" || typeof body.isPublished !== "undefined"
+      ? normalizeStatus(body)
+      : existingPost.status;
+
+  const nextThumbnailUrl = file
+    ? `/uploads/${file.filename}`
+    : body.thumbnailUrl ?? existingPost.thumbnailUrl;
 
   const updatedPost = await prisma.post.update({
     where: { id: postId },
     data: {
-      title: body.title,
-      slug: body.slug,
-      excerpt: body.excerpt,
-      content: body.content,
-      thumbnailUrl: body.thumbnailUrl,
+      title: body.title ?? existingPost.title,
+      slug: body.slug ?? existingPost.slug,
+      excerpt: body.excerpt ?? existingPost.excerpt,
+      content: body.content ?? existingPost.content,
+      category: body.category ?? existingPost.category,
+      thumbnailUrl: nextThumbnailUrl,
       status: nextStatus,
       publishedAt:
         nextStatus === "published"
@@ -154,7 +192,10 @@ export const deletePostService = async (postId, user) => {
     throw new Error("Bài viết không tồn tại");
   }
 
-  if (user.role !== "ADMIN" && existingPost.authorId !== user.userId) {
+  if (
+    normalizeRole(user.role) !== "admin" &&
+    existingPost.authorId !== user.userId
+  ) {
     throw new Error("Bạn không có quyền xóa bài này");
   }
 
