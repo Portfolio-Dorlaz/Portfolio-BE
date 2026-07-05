@@ -2,18 +2,13 @@ import { getBearerTokenFromHeader, verifyAccessToken } from "../utils/jwt.js";
 
 export const authMiddleware = (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token =
-      authHeader && authHeader.startsWith("Bearer ")
-        ? authHeader.slice(7)
-        : null;
+    const token = getBearerTokenFromHeader(req.headers.authorization);
 
     if (!token) {
       return res.status(401).json({ message: "Access token is required" });
     }
 
-    const decoded = verifyAccessToken(token);
-    req.user = decoded;
+    req.user = verifyAccessToken(token);
     next();
   } catch (error) {
     return res.status(401).json({

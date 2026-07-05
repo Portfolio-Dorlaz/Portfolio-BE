@@ -7,17 +7,17 @@ import {
   updatePostController,
   deletePostController,
 } from "../controllers/post.controller.js";
-import { verifyAccessToken } from "../utils/jwt.js";
 import { uploadSingleImage } from "../middleware/upload.middleware.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 router.get("/", getPublishedPostsController);
-router.get("/admin/all", verifyAccessToken, getAllPostsAdminController);
+router.get("/admin/all", authMiddleware, getAllPostsAdminController);
 router.get("/:slug", getPostBySlugController);
 
-router.post("/", verifyAccessToken, uploadSingleImage, createPostController);
-router.put("/:id", verifyAccessToken, uploadSingleImage, updatePostController);
-router.delete("/:id", verifyAccessToken, deletePostController);
+router.post("/", authMiddleware, uploadSingleImage, createPostController);
+router.put("/:id", authMiddleware, uploadSingleImage, updatePostController);
+router.delete("/:id", authMiddleware, deletePostController);
 
 export default router;

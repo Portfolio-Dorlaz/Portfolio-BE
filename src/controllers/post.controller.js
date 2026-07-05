@@ -9,25 +9,24 @@ import {
 
 export const createPostController = async (req, res) => {
   try {
-    console.log("REQ USER:", req.user);
-    console.log("REQ BODY:", req.body);
-    console.log("REQ FILE:", req.file
-      ? {
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-          hasBuffer: !!req.file.buffer,
-        }
-      : null
-    );
-
     const post = await createPostService(req.user?.userId, req.body, req.file);
     return res.status(201).json(post);
   } catch (error) {
-    console.error("createPostController error:", error);
-    return res.status(500).json({
-      message: error.message || "Tạo bài viết thất bại",
-    });
+    const message = error.message || "Tạo bài viết thất bại";
+
+    if (message === "Không xác định được người tạo bài viết") {
+      return res.status(401).json({ message });
+    }
+
+    if (message === "Thiếu title, slug hoặc content") {
+      return res.status(400).json({ message });
+    }
+
+    if (message === "Slug đã tồn tại") {
+      return res.status(409).json({ message });
+    }
+
+    return res.status(500).json({ message });
   }
 };
 
