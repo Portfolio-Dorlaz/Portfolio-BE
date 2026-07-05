@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { uploadBufferToCloudinary } from "../utils/uploadToCloudinary.js";
 
 const normalizeRole = (role) => String(role || "").toLowerCase();
 
@@ -20,6 +21,10 @@ export const createPostService = async (userId, body, file) => {
   const { title, slug, excerpt, content, category } = body;
   const status = normalizeStatus(body);
 
+  if (!userId) {
+    throw new Error("Không xác định được người tạo bài viết");
+  }
+
   if (!title || !slug || !content) {
     throw new Error("Thiếu title, slug hoặc content");
   }
@@ -32,7 +37,12 @@ export const createPostService = async (userId, body, file) => {
     throw new Error("Slug đã tồn tại");
   }
 
-  const thumbnailUrl = file ? `/uploads/${file.filename}` : null;
+  let thumbnailUrl = null;
+
+  if (file) {
+    const uploaded = await uploadBufferToCloudinary(file.buffer, "portfolio/posts");
+    thumbnailUrl = uploaded.secure_url;
+  }
 
   const post = await prisma.post.create({
     data: {
@@ -150,9 +160,12 @@ export const updatePostService = async (postId, user, body, file) => {
       ? normalizeStatus(body)
       : existingPost.status;
 
-  const nextThumbnailUrl = file
-    ? `/uploads/${file.filename}`
-    : body.thumbnailUrl ?? existingPost.thumbnailUrl;
+  let nextThumbnailUrl = body.thumbnailUrl ?? existingPost.thumbnailUrl;
+
+  if (file) {
+    const uploaded = await uploadBufferToCloudinary(file.buffer, "portfolio/posts");
+    nextThumbnailUrl = uploaded.secure_url;
+  }
 
   const updatedPost = await prisma.post.update({
     where: { id: postId },

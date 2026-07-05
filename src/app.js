@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from 'cookie-parser';
 import cors from "cors";
+import path from "path";
 import authRoutes from "./routes/auth.route.js";
 import postRoutes from "./routes/post.route.js";
 import commentRoutes from "./routes/comment.route.js";
@@ -33,6 +34,8 @@ app.use(express.json());
 app.use(express.static("public"));
 app.use(cookieParser());
 // app.use(express.urlencoded({ extended: true }));
+
+app.use("/uploads", express.static(path.resolve("public/uploads")));
 
 // router
 app.use("/api/auth", authRoutes);
