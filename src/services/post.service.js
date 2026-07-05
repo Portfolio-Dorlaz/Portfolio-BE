@@ -86,9 +86,6 @@ export const createPostService = async (userId, body, file) => {
 
 export const getPublishedPostsService = async () => {
   return prisma.post.findMany({
-    where: {
-      status: "published",
-    },
     orderBy: {
       publishedAt: "desc",
     },
