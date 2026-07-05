@@ -18,8 +18,27 @@ const normalizeStatus = (body) => {
 };
 
 export const createPostService = async (userId, body, file) => {
-  const { title, slug, excerpt, content, category } = body;
-  const status = normalizeStatus(body);
+  console.log("SERVICE userId:", userId);
+  console.log("SERVICE body:", body);
+  console.log("SERVICE file:", file
+    ? {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        hasBuffer: !!file.buffer,
+      }
+    : null
+  );
+
+  const title = String(body.title || "").trim();
+  const slug = String(body.slug || "").trim();
+  const excerpt = String(body.excerpt || "").trim();
+  const content = String(body.content || "").trim();
+  const category = String(body.category || "").trim();
+  const status =
+    body.isPublished === "true" || body.isPublished === true
+      ? "published"
+      : "draft";
 
   if (!userId) {
     throw new Error("Không xác định được người tạo bài viết");
@@ -39,11 +58,14 @@ export const createPostService = async (userId, body, file) => {
 
   let thumbnailUrl = null;
 
-  if (file) {
+  if (file?.buffer) {
+    console.log("Uploading to Cloudinary...");
     const uploaded = await uploadBufferToCloudinary(file.buffer, "portfolio/posts");
+    console.log("Cloudinary uploaded:", uploaded?.secure_url);
     thumbnailUrl = uploaded.secure_url;
   }
 
+  console.log("Creating post in DB...");
   const post = await prisma.post.create({
     data: {
       title,
@@ -56,17 +78,9 @@ export const createPostService = async (userId, body, file) => {
       thumbnailUrl,
       authorId: userId,
     },
-    include: {
-      author: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-        },
-      },
-    },
   });
 
+  console.log("Created post:", post);
   return post;
 };
 

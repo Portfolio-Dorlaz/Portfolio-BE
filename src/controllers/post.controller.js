@@ -9,21 +9,23 @@ import {
 
 export const createPostController = async (req, res) => {
   try {
-    const post = await createPostService(req.user.userId, req.body, req.file);
+    console.log("REQ USER:", req.user);
+    console.log("REQ BODY:", req.body);
+    console.log("REQ FILE:", req.file
+      ? {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          hasBuffer: !!req.file.buffer,
+        }
+      : null
+    );
+
+    const post = await createPostService(req.user?.userId, req.body, req.file);
     return res.status(201).json(post);
   } catch (error) {
     console.error("createPostController error:", error);
-
-    const status =
-      error.message === "Thiếu title, slug hoặc content"
-        ? 400
-        : error.message === "Slug đã tồn tại"
-        ? 409
-        : error.message === "Không xác định được người tạo bài viết"
-        ? 401
-        : 500;
-
-    return res.status(status).json({
+    return res.status(500).json({
       message: error.message || "Tạo bài viết thất bại",
     });
   }
