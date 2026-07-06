@@ -18,18 +18,7 @@ const normalizeStatus = (body) => {
 };
 
 export const createPostService = async (userId, body, file) => {
-  console.log("SERVICE userId:", userId);
-  console.log("SERVICE body:", body);
-  console.log("SERVICE file:", file
-    ? {
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-        hasBuffer: !!file.buffer,
-      }
-    : null
-  );
-
+  
   const title = String(body.title || "").trim();
   const slug = String(body.slug || "").trim();
   const excerpt = String(body.excerpt || "").trim();
@@ -59,13 +48,10 @@ export const createPostService = async (userId, body, file) => {
   let thumbnailUrl = null;
 
   if (file?.buffer) {
-    console.log("Uploading to Cloudinary...");
     const uploaded = await uploadBufferToCloudinary(file.buffer, "portfolio/posts");
-    console.log("Cloudinary uploaded:", uploaded?.secure_url);
     thumbnailUrl = uploaded.secure_url;
   }
 
-  console.log("Creating post in DB...");
   const post = await prisma.post.create({
     data: {
       title,
@@ -80,7 +66,6 @@ export const createPostService = async (userId, body, file) => {
     },
   });
 
-  console.log("Created post:", post);
   return post;
 };
 
@@ -103,13 +88,15 @@ export const getPublishedPostsService = async () => {
 export const getPostBySlugService = async (slug) => {
   const post = await prisma.post.findFirst({
     where: {
-      slug
+      slug,
     },
     include: {
       author: {
         select: {
           id: true,
           fullName: true,
+          email: true,
+          role: true,
         },
       },
     },
