@@ -7,88 +7,131 @@ import {
   deletePostService,
 } from "../services/post.service.js";
 
+const getErrorStatus = (message) => {
+  if (
+    message === "Không xác định được người tạo bài viết" ||
+    message === "Unauthorized"
+  ) {
+    return 401;
+  }
+
+  if (
+    message === "Title không được để trống" ||
+    message === "Slug không được để trống" ||
+    message === "Content không được để trống" ||
+    message === "Slug không hợp lệ"
+  ) {
+    return 400;
+  }
+
+  if (message === "Bài viết không tồn tại" || message === "Không tìm thấy bài viết") {
+    return 404;
+  }
+
+  if (
+    message === "Bạn không có quyền sửa bài này" ||
+    message === "Bạn không có quyền xóa bài này"
+  ) {
+    return 403;
+  }
+
+  if (message === "Slug đã tồn tại") {
+    return 409;
+  }
+
+  return 500;
+};
+
 export const createPostController = async (req, res) => {
   try {
-    const post = await createPostService(req.user?.userId, req.body, req.file);
-    return res.status(201).json(post);
+    const post = await createPostService(req.user?.userId, req.body, req.files);
+
+    return res.status(201).json({
+      message: "Tạo bài viết thành công",
+      data: post,
+    });
   } catch (error) {
     const message = error.message || "Tạo bài viết thất bại";
 
-    if (message === "Không xác định được người tạo bài viết") {
-      return res.status(401).json({ message });
-    }
-
-    if (message === "Thiếu title, slug hoặc content") {
-      return res.status(400).json({ message });
-    }
-
-    if (message === "Slug đã tồn tại") {
-      return res.status(409).json({ message });
-    }
-
-    return res.status(500).json({ message });
+    return res.status(getErrorStatus(message)).json({ message });
   }
 };
 
 export const getPublishedPostsController = async (req, res) => {
   try {
     const posts = await getPublishedPostsService();
-    return res.status(200).json(posts);
+
+    return res.status(200).json({
+      message: "Lấy danh sách bài viết thành công",
+      data: posts,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({
+      message: error.message || "Lấy danh sách bài viết thất bại",
+    });
   }
 };
 
 export const getPostBySlugController = async (req, res) => {
   try {
     const post = await getPostBySlugService(req.params.slug);
-    return res.status(200).json(post);
+
+    return res.status(200).json({
+      message: "Lấy chi tiết bài viết thành công",
+      data: post,
+    });
   } catch (error) {
-    return res.status(404).json({ message: error.message });
+    const message = error.message || "Lấy chi tiết bài viết thất bại";
+
+    return res.status(getErrorStatus(message)).json({ message });
   }
 };
 
 export const getAllPostsAdminController = async (req, res) => {
   try {
     const posts = await getAllPostsAdminService();
-    return res.status(200).json(posts);
+
+    return res.status(200).json({
+      message: "Lấy toàn bộ bài viết thành công",
+      data: posts,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({
+      message: error.message || "Lấy toàn bộ bài viết thất bại",
+    });
   }
 };
 
 export const updatePostController = async (req, res) => {
   try {
-    const post = await updatePostService(req.params.id, req.user, req.body, req.file);
-    return res.status(200).json(post);
+    const post = await updatePostService(
+      req.params.id,
+      req.user,
+      req.body,
+      req.files,
+    );
+
+    return res.status(200).json({
+      message: "Cập nhật bài viết thành công",
+      data: post,
+    });
   } catch (error) {
     console.error("updatePostController error:", error);
 
-    const status =
-      error.message === "Bài viết không tồn tại"
-        ? 404
-        : error.message === "Bạn không có quyền sửa bài này"
-        ? 403
-        : error.message === "Slug đã tồn tại"
-        ? 409
-        : 400;
+    const message = error.message || "Cập nhật bài viết thất bại";
 
-    return res.status(status).json({ message: error.message });
+    return res.status(getErrorStatus(message)).json({ message });
   }
 };
 
 export const deletePostController = async (req, res) => {
   try {
     const result = await deletePostService(req.params.id, req.user);
+
     return res.status(200).json(result);
   } catch (error) {
-    const status =
-      error.message === "Bài viết không tồn tại"
-        ? 404
-        : error.message === "Bạn không có quyền xóa bài này"
-        ? 403
-        : 400;
+    const message = error.message || "Xóa bài viết thất bại";
 
-    return res.status(status).json({ message: error.message });
+    return res.status(getErrorStatus(message)).json({ message });
   }
 };

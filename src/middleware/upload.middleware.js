@@ -17,25 +17,35 @@ const multerUpload = multer({
   fileFilter,
   limits: {
     fileSize: 2 * 1024 * 1024,
-    files: 1,
+    files: 21,
   },
 });
 
-export const uploadSingleImage = (req, res, next) => {
-  const handler = multerUpload.single("image");
+export const uploadPostImages = (req, res, next) => {
+  const handler = multerUpload.fields([
+    { name: "thumbnail", maxCount: 1 },
+    { name: "images", maxCount: 20 },
+  ]);
 
   handler(req, res, (err) => {
     if (err) {
       if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
           return res.status(400).json({
-            message: "Ảnh không được vượt quá 2MB",
+            message: "Mỗi ảnh không được vượt quá 2MB",
+          });
+        }
+
+        if (err.code === "LIMIT_FILE_COUNT") {
+          return res.status(400).json({
+            message: "Số lượng ảnh vượt quá giới hạn cho phép",
           });
         }
 
         if (err.code === "LIMIT_UNEXPECTED_FILE") {
           return res.status(400).json({
-            message: "Tên field file không hợp lệ, cần dùng 'image'",
+            message:
+              "Tên field file không hợp lệ. Chỉ hỗ trợ 'thumbnail' và 'images'",
           });
         }
 
