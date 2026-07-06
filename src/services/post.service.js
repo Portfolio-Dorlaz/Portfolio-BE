@@ -103,8 +103,7 @@ export const getPublishedPostsService = async () => {
 export const getPostBySlugService = async (slug) => {
   const post = await prisma.post.findFirst({
     where: {
-      slug,
-      status: "published",
+      slug
     },
     include: {
       author: {
